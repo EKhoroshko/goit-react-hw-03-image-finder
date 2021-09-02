@@ -1,9 +1,12 @@
 import { Component } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; 
 import './App.css';
 import getImages from './servise/getImages.js';
 import Searchbar from './components/Searchbar/Searchbar';
 import ImageGallery from './components/ImageGallery/ImageGallery';
 import Loader from './components/Loader/Loader';
+import Button from './components/Button/Button';
 
 class App extends Component {
   state = {
@@ -14,41 +17,46 @@ class App extends Component {
   };
 
   onChangeState = value => {
-    this.setState({ value: value });
+    this.setState({ value: value, page: 1, gallery: [] });
   };
 
-  componentDidMount(prevState) {
-    // if (prevState.value !== this.state.value) {
-    this.getApiImages();
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.value !== this.state.value) {
+      this.getApiImages();
+    }
   }
-  //}
 
-  getApiImages() {
-    const { value, page } = this.state;
+  getApiImages = () => {
+    const { page, value } = this.state;
     this.setState({ isLoading: true });
-    getImages
-      .getImagesPixiby(value, page)
-      .then(({ hits }) => {
+
+    getImages(value, page)
+      .then(hits => {
         this.setState(prevState => ({
           gallery: [...prevState.gallery, ...hits],
           page: prevState.page + 1,
         }));
       })
-      .finally(() => {
-        this.setState({ isLoading: false });
+      .then(() => {
         window.scrollTo({
           top: document.documentElement.scrollHeight,
           behavior: 'smooth',
         });
-      });
-  }
+      })
+      .catch()
+      .finally(() => this.setState({ isLoading: false }));
+  };
 
   render() {
+    const { gallery, isLoading } = this.state;
+
     return (
       <div className="App">
         <Searchbar onSubmit={this.onChangeState}></Searchbar>
-        <ImageGallery gallery={this.state.gallery} />
-        {this.state.isLoading && <Loader />}
+        <ImageGallery gallery={gallery} />
+        {isLoading && <Loader />}
+        {gallery.length > 0 ? <Button onClick={this.getApiImages} /> : null}
+        <ToastContainer />
       </div>
     );
   }
