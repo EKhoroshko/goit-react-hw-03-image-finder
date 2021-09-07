@@ -24,7 +24,10 @@ class App extends Component {
   };
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.value !== this.state.value) {
+    if (
+      prevState.value !== this.state.value ||
+      prevState.page !== this.state.page
+    ) {
       this.getApiImages();
     }
   }
@@ -36,19 +39,10 @@ class App extends Component {
     getImages(value, page)
       .then(hits => {
         if (hits.length === 0) {
-          toast.error('Nothing found for your request', {
-            position: 'top-center',
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          });
+          this.toastError();
         }
         this.setState(prevState => ({
           gallery: [...prevState.gallery, ...hits],
-          page: prevState.page + 1,
         }));
       })
       .then(() => {
@@ -67,8 +61,26 @@ class App extends Component {
     }));
   };
 
+  loadMore = () => {
+    this.setState(prevState => ({
+      page: prevState.page + 1,
+    }));
+  };
+
   changeSrc = ({ largeImageURL }) => {
     this.setState({ largeImageURL });
+  };
+
+  toastError = () => {
+    toast.error('Nothing found for your request', {
+      position: 'top-center',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
   };
 
   render() {
@@ -83,7 +95,7 @@ class App extends Component {
           changeSrc={this.changeSrc}
         />
         {isLoading && <Loader />}
-        {gallery.length > 0 ? <Button onClick={this.getApiImages} /> : null}
+        {gallery.length > 0 ? <Button onClick={this.loadMore} /> : null}
         {isShow && (
           <Modal onClose={this.onClickImgOpen} largeImageURL={largeImageURL} />
         )}
